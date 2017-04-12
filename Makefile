@@ -10,6 +10,6 @@ migrDB:
 	make makemigr
 	make migr
 clean:
-	rm vdag/migrations/000*
+	rm vdag/migrations/00*
 superuser:
 	python2 manage.py createsuperuser

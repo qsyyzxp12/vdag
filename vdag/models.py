@@ -17,10 +17,24 @@ class Game(models.Model):
 	def __str__(self):
 		return self.team + " vs " + self.against + " " + self.date.strftime("%Y-%m-%d")
 
+class Player(models.Model):
+	number = models.PositiveSmallIntegerField(primary_key=True)
+	name = models.CharField(max_length=200, default='')
+	height = models.PositiveSmallIntegerField(default=175)
+	weight = models.PositiveSmallIntegerField(default=70)
+	USED_HAND_CHOICES = (
+		('L', 'Left hand'), ('R', 'Right hand'),
+	)
+	used_hand = models.CharField(max_length=1, choices=USED_HAND_CHOICES, default='R')
+	def __str__(self):
+		return 'player ' + str(self.number)
+
 class PPP(models.Model):
 	class Meta:
-		unique_together = (('game', 'offense_way', 'shot_way', 'result'), )
-	game = models.ForeignKey(Game)	
+		unique_together = (('game', 'offense_way', 'shot_way', 'result', 'player'), )
+	game = models.ForeignKey(Game)
+	isTeamPPP = models.BooleanField(default=False)
+	player = models.ForeignKey(Player, blank=True, null=True)
 	offense_way = models.CharField(max_length=3, choices=OFFENSE_WAY_CHOICES, default='')
 	SHOT_WAY_CHOICES = (
 		('D', 'Drive'), ('PU', 'Pull Up'), ('SU', 'Spot Up'), ('TO', 'Turnover'), ('PO', 'Possession'),
@@ -44,6 +58,12 @@ class PPP(models.Model):
 		else:
 			if(not self.result):
 				raise ValidationError("Result can't be null!")
+
+		if(self.isTeamPPP and self.player is not None):
+			raise ValidationError("Player should be null when 'isTeamPPP' box is checked.")
+		elif(not self.isTeamPPP and self.player is None):
+			raise ValidationError("Player is required.")
+
 		return self
 
 class Turnover(models.Model):
@@ -60,7 +80,11 @@ class Turnover(models.Model):
 		return str(self.game)
 
 class ShotChart(models.Model):
-	game = models.OneToOneField(Game, primary_key=True)
+	class Meta:
+		unique_together = (('game', 'isTeamShotChart', 'player'), )
+	game = models.ForeignKey(Game)
+	isTeamShotChart = models.BooleanField(default=False)
+	player = models.ForeignKey(Player, blank=True, null=True)
 	zone1_made = models.PositiveSmallIntegerField(default=0)
 	zone1_attempt = models.PositiveSmallIntegerField(default=0)
 	zone1_hit_rate = models.PositiveSmallIntegerField(default=0)
@@ -94,23 +118,14 @@ class ShotChart(models.Model):
 	zone11_made = models.PositiveSmallIntegerField(default=0)
 	zone11_attempt = models.PositiveSmallIntegerField(default=0)
 	def __str__(self):
-		return strself
-
-class Player(models.Model):
-	number = models.PositiveSmallIntegerField(primary_key=True)
-	name = models.CharField(max_length=200, default='')
-	height = models.PositiveSmallIntegerField(default=175)
-	weight = models.PositiveSmallIntegerField(default=70)
-	USED_HAND_CHOICES = (
-		('L', 'Left hand'), ('R', 'Right hand'),
-	)
-	used_hand = models.CharField(max_length=1, choices=USED_HAND_CHOICES, default='R')
-	def __str__(self):
-		return 'player ' + str(self.number)
+		if(self.player is not None):
+			return str(self.game) + '__' + str(self.player)
+		else:
+			return str(self.game)
 
 class TimeLine(models.Model):
 	game = models.ForeignKey(Game)
-	quarter = models.IntegerField(default=1, validators=[MaxValueValidator(10), MinValueValidator(1)])
+	quarter = models.IntegerField(default=0, validators=[MaxValueValidator(10), MinValueValidator(0)])
 	substitute = models.BooleanField(default=False)
 	player1 = models.ForeignKey(Player, null=True, related_name='player1')
 	player2 = models.ForeignKey(Player, null=True, related_name='player2')
@@ -174,3 +189,78 @@ class TimeLine(models.Model):
 		time = str(self.time_min).zfill(2)+':'+str(self.time_sec).zfill(2)
 		return str(self.game) + '-' + str(self.quarter) + ' ' + time
 
+class Defense(models.Model):
+	class Meta:
+		unique_together = (('game', 'player', 'quarter'), )
+	game = models.ForeignKey(Game)
+	isTeamDefense = models.BooleanField(default=False)
+	player = models.ForeignKey(Player)
+	quarter = models.IntegerField(default=0, validators=[MaxValueValidator(10), MinValueValidator(0)])
+	tip = models.PositiveSmallIntegerField(default=0)
+	close_out = models.PositiveSmallIntegerField(default=0)
+	stop_ball = models.PositiveSmallIntegerField(default=0)
+	block = models.PositiveSmallIntegerField(default=0)
+	steal = models.PositiveSmallIntegerField(default=0)
+	eight_24 = models.PositiveSmallIntegerField(default=0)
+	double_team = models.PositiveSmallIntegerField(default=0)
+	loose_ball = models.PositiveSmallIntegerField(default=0)
+	off_reb = models.PositiveSmallIntegerField(default=0)
+	def_reb = models.PositiveSmallIntegerField(default=0)
+	off_reb_tip = models.PositiveSmallIntegerField(default=0)
+	assist = models.PositiveSmallIntegerField(default=0)
+	turnover = models.PositiveSmallIntegerField(default=0)
+	wide_open = models.PositiveSmallIntegerField(default=0)
+	no_blow_out = models.PositiveSmallIntegerField(default=0)
+	def_assist = models.PositiveSmallIntegerField(default=0)
+	blown_by = models.PositiveSmallIntegerField(default=0)
+	total = models.PositiveSmallIntegerField(default=0)
+	deflections = models.PositiveSmallIntegerField(default=0)
+	
+	def __str__(self):
+		if(self.player is not None):
+			return str(self.game) + '-' + self.quarter + '__' + str(self.player)
+		else:
+			return str(self.game) + '-' + self.quarter 
+	def clean(self):
+		if(self.isTeamDefense and self.player is not None):
+			raise ValidationError("Player should be null when 'isTeamDefense' box is checked.")
+		elif(not self.isTeamDefense and self.player is None):
+			raise ValidationError("Player is required.")
+		return self
+
+class BoxScore(models.Model):
+	class Meta:
+		unique_together = (('game', 'player', 'quarter'), )
+	game = models.ForeignKey(Game)
+	isTeamBoxScore = models.BooleanField(default=False)
+	player = models.ForeignKey(Player)
+	quarter = models.IntegerField(default=0, validators=[MaxValueValidator(10), MinValueValidator(0)])
+	time = models.PositiveSmallIntegerField(default=0)
+	two_pts_made = models.PositiveSmallIntegerField(default=0)
+	two_pts_attempt = models.PositiveSmallIntegerField(default=0)
+	three_pts_made = models.PositiveSmallIntegerField(default=0)
+	three_pts_attempt = models.PositiveSmallIntegerField(default=0)
+	ft_made = models.PositiveSmallIntegerField(default=0)
+	ft_attempt = models.PositiveSmallIntegerField(default=0)
+	off_reb = models.PositiveSmallIntegerField(default=0)
+	def_reb = models.PositiveSmallIntegerField(default=0)
+	total_reb = models.PositiveSmallIntegerField(default=0)
+	assist = models.PositiveSmallIntegerField(default=0)
+	steal = models.PositiveSmallIntegerField(default=0)
+	block = models.PositiveSmallIntegerField(default=0)
+	turnover = models.PositiveSmallIntegerField(default=0)
+	foul = models.PositiveSmallIntegerField(default=0)
+	pts = models.PositiveSmallIntegerField(default=0)
+	
+	def __str__(self):
+		if(self.player is not None):
+			return str(self.game) + '-' + self.quarter + '__' + str(self.player)
+		else:
+			return str(self.game) + '-' + self.quarter 
+	def clean(self):
+		if(self.isTeamBoxScore and self.player is not None):
+			raise ValidationError("Player should be null when 'isTeamBoxScore' box is checked.")
+		elif(not self.isTeamBoxScore and self.player is None):
+			raise ValidationError("Player is required.")
+
+	
