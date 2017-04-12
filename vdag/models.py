@@ -110,7 +110,7 @@ class Player(models.Model):
 
 class TimeLine(models.Model):
 	game = models.ForeignKey(Game)
-	quarter = models.IntegerField(default=0, validators=[MaxValueValidator(10), MinValueValidator(1)])
+	quarter = models.IntegerField(default=1, validators=[MaxValueValidator(10), MinValueValidator(1)])
 	substitute = models.BooleanField(default=False)
 	player1 = models.ForeignKey(Player, null=True, related_name='player1')
 	player2 = models.ForeignKey(Player, null=True, related_name='player2')
@@ -133,9 +133,9 @@ class TimeLine(models.Model):
 		('M', 'Made'), ('A', 'Attempt'), ('F', 'Foul'), ('N1', 'And One'),
 	)
 	result = models.CharField(max_length=2, choices=RESULT_CHOICES, null=True, blank=True)
-	bonus_made = models.PositiveSmallIntegerField(default=0, null=True, blank=True)
-	bonus_attempt = models.PositiveSmallIntegerField(default=0, null=True, blank=True)
-	points = models.PositiveSmallIntegerField(default=0, null=True, blank=True)
+	bonus_made = models.PositiveSmallIntegerField(null=True, blank=True)
+	bonus_attempt = models.PositiveSmallIntegerField(null=True, blank=True)
+	points = models.PositiveSmallIntegerField(null=True, blank=True)
 	def clean(self):
 		if(self.substitute):
 			if(not(self.player_get_on and self.player_get_off)):
@@ -150,29 +150,27 @@ class TimeLine(models.Model):
 			if(self.player_get_on or self.player_get_off):
 				err_mes = "Player_get_on and Player_get_off should be null when substitute is False"
 				raise ValidationError(err_mes)
-			if(not(self.player and self.offense_way and self.shot_way and self.result and self.bonus_made
-			   and self.bonus_attmpt and self.points)):
-				err_mes1 = "Player, Offense_way, Shot_way, Result, bonus_made, "
-				err_mes2 = "bonus_attempt and points are required when substitute is False"   
+			if(not(self.player and self.offense_way and self.shot_way and self.result 
+			   and self.points is not None)):
+				err_mes1 = "Player, Offense_way, Shot_way, Result "
+				err_mes2 = "and points are required when substitute is False"   
 				raise ValidationError(err_mes1 + err_mes2)
 			
-			if(not(self.player1 == self.player or self.player2 == self.player or 
-				   self.player3 == self.player or self.player4 == self.player or 
-				   self.player4 == self.player)):
-				mes = "Player should be on floor, that is, the player should be one of playerN.(N=1~5)"
-				raise ValidationError(mes)
 			if(self.result == 'N1' or self.result == 'F'):
 				if(not bonus_made or not bonus_attempt):
 					raise ValidationError("Bonus fields are required when result is 'And One' or 'Foul'")
 			else:
-				if(bonus_made or bonus_attempt):
+				if(self.bonus_made or self.bonus_attempt):
 					err_mes = "Bonus fields shoube be null when result isn't 'And One' nor 'Foul'"
 					raise ValidationError(err_mes)
+			players_on_floor = [self.player1,self.player2, self.player3, self.player4, self.player5]
+			if(len(players_on_floor) != len(set(players_on_floor))):
+				raise ValidationError("Repeated player on the floor.")
+			if(self.player not in players_on_floor):
+				mes = "Player should be on floor, that is, the player should be one of playerN.(N=1~5)"
+				raise ValidationError(mes)
 		return self
 	def __str__(self):
 		time = str(self.time_min).zfill(2)+':'+str(self.time_sec).zfill(2)
 		return str(self.game) + '-' + str(self.quarter) + ' ' + time
-
-
-
 
