@@ -14,10 +14,10 @@ class PPP(models.Model):
 	class Meta:
 		unique_together = (('game', 'offense_way', 'shot_way', 'result'), )
 	game = models.ForeignKey(Game)	
-#	game = models.AutoField(primary_key=True, blank=True)
 	OFFENSE_WAY_CHOICES = (
-		('F', 'Fast'), ('I', 'Isolation'), ('OS', 'Off-ball Screen'), ('DK', 'Driving Kick'), ('C', 'Cut'), ('O', 'Other'),
-		('PNR', 'Pick and Roll'), ('S', 'Second'), ('PU', 'Post Up'), ('HU', 'High Post'),
+		('F', 'Fast'), ('I', 'Isolation'), ('OS', 'Off-ball Screen'), ('DK', 'Driving Kick'),
+		('C', 'Cut'), ('O', 'Other'), ('PNR', 'Pick and Roll'), ('S', 'Second'), ('PU', 'Post Up'), 
+		('HU', 'High Post'),
 	)
 	offense_way = models.CharField(max_length=3, choices=OFFENSE_WAY_CHOICES, default='')
 	SHOT_WAY_CHOICES = (
@@ -31,7 +31,6 @@ class PPP(models.Model):
 	value = models.PositiveSmallIntegerField(default=0)
 	def __str__(self):
 		val = self.value
-#		string = Game.objects.select_related().filter(id = self.game).team
 		if(self.result):
 			return str(self.game) + ' ' + self.offense_way + '/' + self.shot_way + '/' + self.result + '/' + str(self.value)
 		else:
@@ -45,6 +44,15 @@ class PPP(models.Model):
 				raise ValidationError("Result can't be null!")
 		return self
 
-#class Turnover(models.Model):
-#	game = models.OneToOneField(Game, primary_key=True)
-	
+class Turnover(models.Model):
+	game = models.OneToOneField(Game, primary_key=True)
+	stolen = models.PositiveSmallIntegerField(default=0)
+	badpass = models.PositiveSmallIntegerField(default=0)
+	charging = models.PositiveSmallIntegerField(default=0)
+	drop = models.PositiveSmallIntegerField(default=0)
+	line = models.PositiveSmallIntegerField(default=0)
+	three_second = models.PositiveSmallIntegerField(default=0)
+	traveling = models.PositiveSmallIntegerField(default=0)
+	team = models.PositiveSmallIntegerField(default=0)
+	def __str__(self):
+		return str(self.game)

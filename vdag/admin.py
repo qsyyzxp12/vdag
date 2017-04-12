@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Game, PPP
+from .models import Game, PPP, Turnover
 
 #class ChoiceInline(admin.TabularInline):  # or StackedInline
 #	model = Choice
@@ -18,3 +18,4 @@ from .models import Game, PPP
 #admin.site.register(Question, QuestionAdmin)
 admin.site.register(Game)
 admin.site.register(PPP)
+admin.site.register(Turnover)
