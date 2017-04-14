@@ -112,6 +112,31 @@ class ShotChart(models.Model):
 			return str(self.game) + '__' + str(self.player)
 		else:
 			return str(self.game)
+	def clean(self):
+		if(self.zone1_made > self.zone1_attempt):
+			raise ValidationError("Zone1_made cannot be more than attempt")
+		if(self.zone2_made > self.zone2_attempt):
+			raise ValidationError("Zone2_made cannot be more than attempt")
+		if(self.zone3_made > self.zone3_attempt):
+			raise ValidationError("Zone3_made cannot be more than attempt")
+		if(self.zone4_made > self.zone4_attempt):
+			raise ValidationError("Zone4_made cannot be more than attempt")
+		if(self.zone5_made > self.zone5_attempt):
+			raise ValidationError("Zone5_made cannot be more than attempt")
+		if(self.zone6_made > self.zone6_attempt):
+			raise ValidationError("Zone6_made cannot be more than attempt")
+		if(self.zone7_made > self.zone7_attempt):
+			raise ValidationError("Zone7_made cannot be more than attempt")
+		if(self.zone8_made > self.zone8_attempt):
+			raise ValidationError("Zone8_made cannot be more than attempt")
+		if(self.zone9_made > self.zone9_attempt):
+			raise ValidationError("Zone9_made cannot be more than attempt")
+		if(self.zone10_made > self.zone10_attempt):
+			raise ValidationError("Zone10_made cannot be more than attempt")
+		if(self.zone11_made > self.zone11_attempt):
+			raise ValidationError("Zone11_made cannot be more than attempt")
+		return self
+			
 
 class TimeLine(models.Model):
 	game = models.ForeignKey(Game)
@@ -184,7 +209,7 @@ class Defense(models.Model):
 		unique_together = (('game', 'player', 'quarter'), )
 	game = models.ForeignKey(Game)
 	isTeamDefense = models.BooleanField(default=False)
-	player = models.ForeignKey(Player)
+	player = models.ForeignKey(Player, null=True, blank=True)
 	quarter = models.IntegerField(default=0, validators=[MaxValueValidator(10), MinValueValidator(0)])
 	tip = models.PositiveSmallIntegerField(default=0)
 	close_out = models.PositiveSmallIntegerField(default=0)
@@ -203,14 +228,12 @@ class Defense(models.Model):
 	no_blow_out = models.PositiveSmallIntegerField(default=0)
 	def_assist = models.PositiveSmallIntegerField(default=0)
 	blown_by = models.PositiveSmallIntegerField(default=0)
-	total = models.PositiveSmallIntegerField(default=0)
-	deflections = models.PositiveSmallIntegerField(default=0)
 	
 	def __str__(self):
 		if(self.player is not None):
-			return str(self.game) + '-' + self.quarter + '__' + str(self.player)
+			return str(self.game) + '-' + str(self.quarter) + '__' + str(self.player)
 		else:
-			return str(self.game) + '-' + self.quarter 
+			return str(self.game) + '-' + str(self.quarter)
 	def clean(self):
 		if(self.isTeamDefense and self.player is not None):
 			raise ValidationError("Player should be null when 'isTeamDefense' box is checked.")

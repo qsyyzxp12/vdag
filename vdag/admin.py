@@ -19,19 +19,28 @@ from .models import Game, PPP, Turnover, ShotChart, TimeLine, Player, Defense, B
 
 class GameAdmin(admin.ModelAdmin):
 	list_display = ('date', 'team', 'against')
-admin.site.register(Game, GameAdmin)
 
 class PPPAdmin(admin.ModelAdmin):
-	list_display = ('game', 'isTeamPPP', 'player', 'offense_way', 'shot_way', 'result', 'value')
-admin.site.register(PPP, PPPAdmin)
+	list_display = ('game', 'Player', 'offense_way', 'shot_way', 'result', 'value')
+	def Player(self, obj):
+		if(obj.isTeamPPP):
+			return 'Team'
+		else:
+			return obj.player
 
 class TurnoverAdmin(admin.ModelAdmin):
 	list_display = ('game', 'stolen', 'badpass', 'charging', 'drop', 'line', 'three_second', 'traveling', 'team')
-admin.site.register(Turnover, TurnoverAdmin)
 
 class ShotChartAdmin(admin.ModelAdmin):
-	list_display = ('game', 'isTeamShotChart', 'player', 'zone_1', 'zone_2', 'zone_3', 'zone_4', 'zone_5', 'zone_6', 'zone_7', 'zone_8', 'zone_9', 'zone_10', 'zone_11')
+	list_display = ('game', 'Player', 'zone_1', 'zone_2', 'zone_3', 
+					'zone_4', 'zone_5', 'zone_6', 'zone_7', 'zone_8', 'zone_9', 'zone_10', 
+					'zone_11')
 	
+	def Player(self, obj):
+		if(obj.isTeamShotChart):
+			return 'Team'
+		else:
+			return obj.player
 	def zone_1(self, obj):
 		hit_rate = 0
 		if(obj.zone1_attempt):
@@ -97,10 +106,59 @@ class ShotChartAdmin(admin.ModelAdmin):
 		if(obj.zone11_attempt):
 			hit_rate = obj.zone11_made*100 / obj.zone11_attempt
 		return str(obj.zone11_made) + '/' + str(obj.zone11_attempt) + '  ' + str(hit_rate) + '%'
-#	list_display = ('game', 'isTeamShotChart', 'player', 'zone1_made', 'zone1_attempt', 'zone1_hit_rate', 'zone2_made', 'zone2_attempt', 'zone2_hit_rate', 'zone3_made', 'zone3_attempt', 'zone3_hit_rate', 'zone4_made', 'zone4_attempt', 'zone4_hit_rate', 'zone5_made', 'zone5_attempt', 'zone5_hit_rate', 'zone6_made', 'zone6_attempt', 'zone6_hit_rate', 'zone7_made', 'zone7_attempt', 'zone7_hit_rate', 'zone8_made', 'zone9_attempt', 'zone9_hit_rate', 'zone10_made', 'zone10_attempt', 'zone10_hit_rate', 'zone11_made', 'zone11_attempt', 'zone11_hit_rate')
-admin.site.register(ShotChart, ShotChartAdmin)
 
-admin.site.register(Player)
-admin.site.register(TimeLine)
-admin.site.register(Defense)
+class PlayerAdmin(admin.ModelAdmin):
+	list_display = ('name', 'number', 'height', 'used_hand')
+
+class TimeLineAdmin(admin.ModelAdmin):
+	list_display = ('game', 'quarter', 'player_on_floor', 'player_get_on', 'player_get_off', 
+					'time', 'player', 'offense_way', 'shot_way', 'result', 'bonus_made', 
+					'bonus_attempt', 'points')
+	def player_on_floor (self, obj):
+		tmp = str(obj.player1.number)+', '+str(obj.player2.number)+', '+str(obj.player3.number)+', '
+		return tmp+str(obj.player4.number)+', '+str(obj.player5.number)
+	def time(self, obj):
+		return str(obj.time_min).zfill(2) + ':' + str(obj.time_sec).zfill(2)
+class DefenseAdmin(admin.ModelAdmin):
+	deflection_set = ['tip', 'close_out', 'stop_ball', 'block', 'steal', 'eight_24', 'double_team', 'loose_ball']
+	good_set = ['off_reb', 'def_reb', 'off_reb_tip', 'assist']
+	bad_set = ['turnover', 'wide_open', 'no_blow_out', 'def_assist', 'blown_by']
+	fieldsets = [
+		(None,			{'fields': ['game', 'isTeamDefense', 'player', 'quarter']}),
+		('Deflection', 	{'fields': deflection_set}),
+		('Good', 		{'fields': good_set}),
+		('Bad',			{'fields': bad_set}),
+	]
+	list_display = ('game', 'Player', 'Quarter', 'tip', 'close_out', 'stop_ball', 'block', 
+					'steal', 'eight_24', 'double_team', 'loose_ball', 'off_reb', 'def_reb', 
+					'off_reb_tip', 'assist', 'turnover', 'wide_open', 'no_blow_out', 'def_assist', 
+					'blown_by', 'total', 'deflections')
+	def Quarter(self, obj):
+		if(not obj.quarter):
+			return 'Full Game'
+		elif(obj.quarter < 5):
+			return obj.quarter
+		else:
+			return 'OT ' + str(obj.quarter)
+	def Player(self, obj):
+		if(obj.isTeamDefense):
+			return 'Team'
+		else:
+			return obj.player
+	def total(self, obj):
+		deflection = obj.tip + obj.close_out + obj.stop_ball + obj.block + obj.steal + obj.eight_24 + obj.double_team + obj.loose_ball
+		good = obj.off_reb + obj.def_reb + obj.off_reb_tip + obj.assist
+		bad = obj.turnover + obj.wide_open + obj.no_blow_out + obj.assist + obj.blown_by
+		return deflection + good - bad
+	def deflections(self, obj):
+		deflection = obj.tip + obj.close_out + obj.stop_ball + obj.block + obj.steal + obj.eight_24 + obj.double_team + obj.loose_ball
+		return deflection
+
+admin.site.register(Game, GameAdmin)
+admin.site.register(PPP, PPPAdmin)
+admin.site.register(Turnover, TurnoverAdmin)
+admin.site.register(ShotChart, ShotChartAdmin)
+admin.site.register(Player, PlayerAdmin)
+admin.site.register(TimeLine, TimeLineAdmin)
+admin.site.register(Defense, DefenseAdmin)
 admin.site.register(BoxScore)
