@@ -119,6 +119,7 @@ class TimeLineAdmin(admin.ModelAdmin):
 		return tmp+str(obj.player4.number)+', '+str(obj.player5.number)
 	def time(self, obj):
 		return str(obj.time_min).zfill(2) + ':' + str(obj.time_sec).zfill(2)
+
 class DefenseAdmin(admin.ModelAdmin):
 	deflection_set = ['tip', 'close_out', 'stop_ball', 'block', 'steal', 'eight_24', 'double_team', 'loose_ball']
 	good_set = ['off_reb', 'def_reb', 'off_reb_tip', 'assist']
@@ -139,7 +140,7 @@ class DefenseAdmin(admin.ModelAdmin):
 		elif(obj.quarter < 5):
 			return obj.quarter
 		else:
-			return 'OT ' + str(obj.quarter)
+			return 'OT ' + str(obj.quarter-4)
 	def Player(self, obj):
 		if(obj.isTeamDefense):
 			return 'Team'
@@ -154,6 +155,25 @@ class DefenseAdmin(admin.ModelAdmin):
 		deflection = obj.tip + obj.close_out + obj.stop_ball + obj.block + obj.steal + obj.eight_24 + obj.double_team + obj.loose_ball
 		return deflection
 
+class BoxScoreAdmin(admin.ModelAdmin):
+	list_display = ('game', 'Quarter', 'Player', 'two_pts_made', 'two_pts_attempt', 
+					'three_pts_made', 'three_pts_attempt', 'ft_made', 'ft_attempt', 
+					'off_reb', 'def_reb', 'total_reb', 'assist', 'steal', 'block', 
+					'turnover', 'foul', 'pts')
+	def Quarter(self, obj):
+		if(not obj.quarter):
+			return 'Full Game'
+		elif(obj.quarter < 5):
+			return obj.quarter
+		else:
+			return 'OT ' + str(obj.quarter-4)
+	
+	def Player(self, obj):
+		if(obj.isTeamBoxScore):
+			return 'Team'
+		else:
+			return obj.player
+		
 admin.site.register(Game, GameAdmin)
 admin.site.register(PPP, PPPAdmin)
 admin.site.register(Turnover, TurnoverAdmin)
@@ -161,4 +181,4 @@ admin.site.register(ShotChart, ShotChartAdmin)
 admin.site.register(Player, PlayerAdmin)
 admin.site.register(TimeLine, TimeLineAdmin)
 admin.site.register(Defense, DefenseAdmin)
-admin.site.register(BoxScore)
+admin.site.register(BoxScore, BoxScoreAdmin)

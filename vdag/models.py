@@ -10,6 +10,14 @@ OFFENSE_WAY_CHOICES = (
 	('HU', 'High Post'),
 )
 
+def quarterName(quarter):
+	if(not quarter):
+		return 'Full Game'
+	elif(quarter < 5):
+		return str(quarter)
+	else:
+		return 'TO' + str(quarter)
+
 class Game(models.Model):
 	team = models.CharField(max_length=200)
 	against = models.CharField(max_length=200, default='')
@@ -202,7 +210,7 @@ class TimeLine(models.Model):
 		return self
 	def __str__(self):
 		time = str(self.time_min).zfill(2)+':'+str(self.time_sec).zfill(2)
-		return str(self.game) + '-' + str(self.quarter) + ' ' + time
+		return str(self.game) + '-' + quarterName(self.quarter) + ' ' + time
 
 class Defense(models.Model):
 	class Meta:
@@ -231,9 +239,9 @@ class Defense(models.Model):
 	
 	def __str__(self):
 		if(self.player is not None):
-			return str(self.game) + '-' + str(self.quarter) + '__' + str(self.player)
+			return str(self.game) + '-' + quarterName(self.quarter) + '__' + str(self.player)
 		else:
-			return str(self.game) + '-' + str(self.quarter)
+			return str(self.game) + '-' + quarterName(self.quarter)
 	def clean(self):
 		if(self.isTeamDefense and self.player is not None):
 			raise ValidationError("Player should be null when 'isTeamDefense' box is checked.")
@@ -246,7 +254,7 @@ class BoxScore(models.Model):
 		unique_together = (('game', 'player', 'quarter'), )
 	game = models.ForeignKey(Game)
 	isTeamBoxScore = models.BooleanField(default=False)
-	player = models.ForeignKey(Player)
+	player = models.ForeignKey(Player, null=True, blank=True)
 	quarter = models.IntegerField(default=0, validators=[MaxValueValidator(10), MinValueValidator(0)])
 	time = models.PositiveSmallIntegerField(default=0)
 	two_pts_made = models.PositiveSmallIntegerField(default=0)
@@ -267,13 +275,13 @@ class BoxScore(models.Model):
 	
 	def __str__(self):
 		if(self.player is not None):
-			return str(self.game) + '-' + self.quarter + '__' + str(self.player)
+			return str(self.game) + '-' + quarterName(self.quarter) + '__' + str(self.player)
 		else:
-			return str(self.game) + '-' + self.quarter 
+			return str(self.game) + '-' + quarterName(self.quarter) 
 	def clean(self):
 		if(self.isTeamBoxScore and self.player is not None):
 			raise ValidationError("Player should be null when 'isTeamBoxScore' box is checked.")
 		elif(not self.isTeamBoxScore and self.player is None):
 			raise ValidationError("Player is required.")
-
+		return self
 	
