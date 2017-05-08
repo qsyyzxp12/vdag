@@ -71,8 +71,20 @@ class PPP(models.Model):
 			raise ValidationError("Player should be null when 'isTeamPPP' box is checked.")
 		elif(not self.isTeamPPP and self.player is None):
 			raise ValidationError("Player is required.")
-
 		return self
+	def save(self, *args, **kwargs):
+		if((self.shot_way == 'TO' or self.shot_way == 'PO')):
+			if(self.result):
+				raise ValidationError("Result should be null!")
+		else:
+			if(not self.result):
+				raise ValidationError("Result can't be null!")
+
+		if(self.isTeamPPP and self.player is not None):
+			raise ValidationError("Player should be null when 'isTeamPPP' box is checked.")
+		elif(not self.isTeamPPP and self.player is None):
+			raise ValidationError("Player is required.")
+		super(PPP, self).save(*args, **kwargs)
 
 class Turnover(models.Model):
 	game = models.OneToOneField(Game, primary_key=True)
@@ -121,6 +133,10 @@ class ShotChart(models.Model):
 		else:
 			return str(self.game)
 	def clean(self):
+		if self.isTeamShotChart:
+			obj = ShotChart.objects.get(game=self.game, isTeamShotChart=True)
+			if obj:
+				raise ValidationError("This game's team Shot Chart already exists.")
 		if(self.zone1_made > self.zone1_attempt):
 			raise ValidationError("Zone1_made cannot be more than attempt")
 		if(self.zone2_made > self.zone2_attempt):
@@ -144,7 +160,35 @@ class ShotChart(models.Model):
 		if(self.zone11_made > self.zone11_attempt):
 			raise ValidationError("Zone11_made cannot be more than attempt")
 		return self
-			
+	
+	def save(self, *args, **kwargs):
+		if self.isTeamShotChart:
+			obj = ShotChart.objects.get(game=self.game, isTeamShotChart=True)
+			if obj:
+				raise ValidationError("This game's team Shot Chart already exists.")
+		if(self.zone1_made > self.zone1_attempt):
+			raise ValidationError("Zone1_made cannot be more than attempt")
+		if(self.zone2_made > self.zone2_attempt):
+			raise ValidationError("Zone2_made cannot be more than attempt")
+		if(self.zone3_made > self.zone3_attempt):
+			raise ValidationError("Zone3_made cannot be more than attempt")
+		if(self.zone4_made > self.zone4_attempt):
+			raise ValidationError("Zone4_made cannot be more than attempt")
+		if(self.zone5_made > self.zone5_attempt):
+			raise ValidationError("Zone5_made cannot be more than attempt")
+		if(self.zone6_made > self.zone6_attempt):
+			raise ValidationError("Zone6_made cannot be more than attempt")
+		if(self.zone7_made > self.zone7_attempt):
+			raise ValidationError("Zone7_made cannot be more than attempt")
+		if(self.zone8_made > self.zone8_attempt):
+			raise ValidationError("Zone8_made cannot be more than attempt")
+		if(self.zone9_made > self.zone9_attempt):
+			raise ValidationError("Zone9_made cannot be more than attempt")
+		if(self.zone10_made > self.zone10_attempt):
+			raise ValidationError("Zone10_made cannot be more than attempt")
+		if(self.zone11_made > self.zone11_attempt):
+			raise ValidationError("Zone11_made cannot be more than attempt")
+		super(ShotChart, self).save(*args, **kwargs)
 
 class TimeLine(models.Model):
 	game = models.ForeignKey(Game)
@@ -208,6 +252,42 @@ class TimeLine(models.Model):
 				mes = "Player should be on floor, that is, the player should be one of playerN.(N=1~5)"
 				raise ValidationError(mes)
 		return self
+
+	def save(self, *args, **kwargs):
+		if(self.substitute):
+			if(not(self.player_get_on and self.player_get_off)):
+				err_mes = "Player_get_on and Player_get_off is required when substitute is True"
+				raise ValidationError(err_mes)
+			if(self.player or self.offense_way or self.shot_way or self.result or self.bonus_made or
+			   self.bonus_attempt or self.points):
+				err_mes1 = "Player, Offense_way, Shot_way, Result, bonus_made, "
+				err_mes2 = "bonus_attempt and points should be null when substitute is True"   
+				raise ValidationError(err_mes1 + err_mes2)
+		else:
+			if(self.player_get_on or self.player_get_off):
+				err_mes = "Player_get_on and Player_get_off should be null when substitute is False"
+				raise ValidationError(err_mes)
+			if(not(self.player and self.offense_way and self.shot_way and self.result 
+			   and self.points is not None)):
+				err_mes1 = "Player, Offense_way, Shot_way, Result "
+				err_mes2 = "and points are required when substitute is False"   
+				raise ValidationError(err_mes1 + err_mes2)
+			
+			if(self.result == 'N1' or self.result == 'F'):
+				if(not bonus_made or not bonus_attempt):
+					raise ValidationError("Bonus fields are required when result is 'And One' or 'Foul'")
+			else:
+				if(self.bonus_made or self.bonus_attempt):
+					err_mes = "Bonus fields shoube be null when result isn't 'And One' nor 'Foul'"
+					raise ValidationError(err_mes)
+			players_on_floor = [self.player1,self.player2, self.player3, self.player4, self.player5]
+			if(len(players_on_floor) != len(set(players_on_floor))):
+				raise ValidationError("Repeated player on the floor.")
+			if(self.player not in players_on_floor):
+				mes = "Player should be on floor, that is, the player should be one of playerN.(N=1~5)"
+				raise ValidationError(mes)
+		super(TimeLine, self).save(*args, **kwargs)
+		
 	def __str__(self):
 		time = str(self.time_min).zfill(2)+':'+str(self.time_sec).zfill(2)
 		return str(self.game) + '-' + quarterName(self.quarter) + ' ' + time
@@ -248,6 +328,12 @@ class Defense(models.Model):
 		elif(not self.isTeamDefense and self.player is None):
 			raise ValidationError("Player is required.")
 		return self
+	def save(self, *args, **kwargs):
+		if(self.isTeamDefense and self.player is not None):
+			raise ValidationError("Player should be null when 'isTeamDefense' box is checked.")
+		elif(not self.isTeamDefense and self.player is None):
+			raise ValidationError("Player is required.")
+		super(Defense, self).save(*arg, **kwargs)
 
 class BoxScore(models.Model):
 	class Meta:
@@ -284,4 +370,10 @@ class BoxScore(models.Model):
 		elif(not self.isTeamBoxScore and self.player is None):
 			raise ValidationError("Player is required.")
 		return self
+	def save(self, *args, **kwargs):
+		if(self.isTeamBoxScore and self.player is not None):
+			raise ValidationError("Player should be null when 'isTeamBoxScore' box is checked.")
+		elif(not self.isTeamBoxScore and self.player is None):
+			raise ValidationError("Player is required.")
+		super(BoxScore, self).save(*args, **kwargs)
 	
