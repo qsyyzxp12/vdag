@@ -162,7 +162,7 @@ class ShotChart(models.Model):
 		return self
 	
 	def save(self, *args, **kwargs):
-		if self.isTeamShotChart:
+		if self.isTeamShotChart == True:
 			obj = ShotChart.objects.get(game=self.game, isTeamShotChart=True)
 			if obj:
 				raise ValidationError("This game's team Shot Chart already exists.")
@@ -294,7 +294,7 @@ class TimeLine(models.Model):
 
 class Defense(models.Model):
 	class Meta:
-		unique_together = (('game', 'player', 'quarter'), )
+		unique_together = (('game', 'isTeamDefense', 'player', 'quarter'), )
 	game = models.ForeignKey(Game)
 	isTeamDefense = models.BooleanField(default=False)
 	player = models.ForeignKey(Player, null=True, blank=True)
@@ -323,21 +323,29 @@ class Defense(models.Model):
 		else:
 			return str(self.game) + '-' + quarterName(self.quarter)
 	def clean(self):
+		if self.isTeamDefense == True:
+			obj = Defense.objects.get(game=self.game, isTeamDefense=True)
+			if obj:
+				raise ValidationError("This game's team Defense already exists.")
 		if(self.isTeamDefense and self.player is not None):
 			raise ValidationError("Player should be null when 'isTeamDefense' box is checked.")
 		elif(not self.isTeamDefense and self.player is None):
 			raise ValidationError("Player is required.")
 		return self
 	def save(self, *args, **kwargs):
+		if self.isTeamDefense == True:
+			obj = Defense.objects.get(game=self.game, isTeamDefense=True)
+			if obj:
+				raise ValidationError("This game's team Defense already exists.")
 		if(self.isTeamDefense and self.player is not None):
 			raise ValidationError("Player should be null when 'isTeamDefense' box is checked.")
 		elif(not self.isTeamDefense and self.player is None):
 			raise ValidationError("Player is required.")
-		super(Defense, self).save(*arg, **kwargs)
+		super(Defense, self).save(*args, **kwargs)
 
 class BoxScore(models.Model):
 	class Meta:
-		unique_together = (('game', 'player', 'quarter'), )
+		unique_together = (('game', 'isTeamBoxScore', 'player', 'quarter'), )
 	game = models.ForeignKey(Game)
 	isTeamBoxScore = models.BooleanField(default=False)
 	player = models.ForeignKey(Player, null=True, blank=True)
@@ -365,12 +373,20 @@ class BoxScore(models.Model):
 		else:
 			return str(self.game) + '-' + quarterName(self.quarter) 
 	def clean(self):
+		if self.isTeamBoxScore == True:
+			obj = BoxScore.objects.get(game=self.game, isTeamBoxScore=True)
+			if obj:
+				raise ValidationError("This game's team BoxScore already exists.")
 		if(self.isTeamBoxScore and self.player is not None):
 			raise ValidationError("Player should be null when 'isTeamBoxScore' box is checked.")
 		elif(not self.isTeamBoxScore and self.player is None):
 			raise ValidationError("Player is required.")
 		return self
 	def save(self, *args, **kwargs):
+		if self.isTeamBoxScore == True:
+			obj = BoxScore.objects.get(game=self.game, isTeamBoxScore=True)
+			if obj:
+				raise ValidationError("This game's team BoxScore already exists.")
 		if(self.isTeamBoxScore and self.player is not None):
 			raise ValidationError("Player should be null when 'isTeamBoxScore' box is checked.")
 		elif(not self.isTeamBoxScore and self.player is None):
