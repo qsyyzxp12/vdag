@@ -1,5 +1,6 @@
 import datetime
 from django.http import HttpResponse, StreamingHttpResponse
+from django.core.exceptions import ValidationError
 from vdag.models import Game, PPP, Turnover, ShotChart, Player, TimeLine, Defense, BoxScore
 from django.views.decorators.csrf import csrf_exempt
 
@@ -13,7 +14,11 @@ def getGame(y, m, d, team, against):
 	except Game.DoesNotExist:
 		dateStr = y + '-' + m + '-' + d
 		date = datetime.datetime.strptime(dateStr, "%Y-%m-%d")
-		game = Game(date=date, team=team, against=against)
+		game = Game(
+						date=date, 
+						team=team, 
+						against=against
+				   )
 		game.save()
 	return game
 
@@ -26,24 +31,32 @@ def getPlayer(no):
 
 @csrf_exempt
 def addPPP(request):
-	arg = request.POST
-	game = getGame(arg.get('year'), arg.get('month'), arg.get('day'), arg.get('team'), arg.get('against'))
-	player = None
-	if arg.get('isTeamPPP') == 'False':
-		player = getPlayer(arg.get('player'))
-		if not player:
-			return HttpResponse("No this player")
-	ppp = PPP(
-				game = game,
-				isTeamPPP = arg.get('isTeamPPP'), 
-				player = player, 
-				offense_way = arg.get('offense_way'),
-				shot_way = arg.get('shot_way'), 
-				result = arg.get('result'),
-				value = arg.get('value')
-			)
-	ppp.save()
-	return HttpResponse(str(ppp))
+	if request.method == 'POST':
+		arg = request.POST
+#		print request.body
+#		print str(arg) + '\n'
+		game = getGame(arg.get('year'), arg.get('month'), arg.get('day'), arg.get('team'), arg.get('against'))
+		player = None
+		if arg.get('isTeamPPP') == 'False':
+			player = getPlayer(arg.get('player'))
+			if not player:
+				return HttpResponse("No this player")
+		ppp = PPP(
+					game = game,
+					isTeamPPP = arg.get('isTeamPPP'), 
+					player = player, 
+					offense_way = arg.get('offense_way'),
+					shot_way = arg.get('shot_way'), 
+					result = arg.get('result'),
+					value = arg.get('value')
+				)
+		try:
+			ppp.save()
+		except ValidationError as e:
+			print str(e)
+			return HttpResponse("Fail")
+		return HttpResponse("Success")
+
 
 @csrf_exempt
 def addTurnover(request):
@@ -60,7 +73,10 @@ def addTurnover(request):
 							traveling = arg.get('traveling'),
 							team = arg.get('Team')
 						)
-	turnover.save()
+	try:
+		turnover.save()
+	except ValidationError as e:
+		print str(e)
 	return HttpResponse(str(turnover))
 
 @csrf_exempt
@@ -99,7 +115,10 @@ def addShotChart(request):
 							zone11_made = arg.get('zone11_made'),
 							zone11_attempt = arg.get('zone11_attempt'),
 						)
-	shotchart.save()
+	try:
+		shotchart.save()
+	except ValidationError as e:
+		print str(e)
 	return HttpResponse(str(shotchart))
 
 @csrf_exempt
@@ -141,7 +160,10 @@ def addTimeLine(request):
 							bonus_attempt = arg.get('bonus_attempt'),
 							points = arg.get('points'),
 						)
-	timeline.save()
+	try:
+		timeline.save()
+	except ValidationError as e:
+		print str(e)
 	return HttpResponse(str(timeline))
 
 @csrf_exempt
@@ -168,7 +190,7 @@ def addDefense(request):
 						loose_ball = arg.get('loose_ball'),
 						off_reb = arg.get('off_reb'),
 						def_reb = arg.get('def_reb'),
-						off_def_reb = arg.get('off_def_reb'),
+						off_reb_tip = arg.get('off_reb_tip'),
 						assist = arg.get('assist'),
 						turnover = arg.get('turnover'),
 						wide_open = arg.get('wide_open'),
@@ -176,7 +198,10 @@ def addDefense(request):
 						def_assist = arg.get('def_assist'),
 						blown_by = arg.get('blown_by'),
 					 )
-	defense.save()
+	try:
+		defense.save()
+	except ValidationError as e:
+		print str(e)
 	return HttpResponse(str(defense))
 
 @csrf_exempt
@@ -210,5 +235,8 @@ def addBoxScore(request):
 							foul = arg.get('foul'),
 							pts = arg.get('pts'),
 					   )
-	boxscore.save()
+	try:
+		boxscore.save()
+	except ValidationError as e:
+		print str(e)
 	return HttpResponse(str(boxscore))

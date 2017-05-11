@@ -17,7 +17,32 @@ from .models import Game, PPP, Turnover, ShotChart, TimeLine, Player, Defense, B
 
 #admin.site.register(Question, QuestionAdmin)
 
+class PPPInline(admin.TabularInline):
+	model = PPP
+	extra = 0
+
+class TurnoverInline(admin.TabularInline):
+	model = Turnover
+	extra = 0
+
+class ShotChartInline(admin.TabularInline):
+	model = ShotChart
+	extra = 0
+
+class TimeLineInline(admin.TabularInline):
+	model = TimeLine
+	extra = 0
+
+class DefenseInline(admin.TabularInline):
+	model = Defense
+	extra = 0
+
+class BoxScoreInline(admin.TabularInline):
+	model = BoxScore
+	extra = 0
+
 class GameAdmin(admin.ModelAdmin):
+	inlines = [PPPInline, ShotChartInline, TurnoverInline, TimeLineInline, DefenseInline, BoxScoreInline]
 	list_display = ('date', 'team', 'against')
 
 class PPPAdmin(admin.ModelAdmin):

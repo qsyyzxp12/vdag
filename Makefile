@@ -1,5 +1,5 @@
 run:
-	python2 manage.py runserver
+	python2 manage.py runserver 0.0.0.0:8000
 makemigr:
 	python2 manage.py makemigrations vdag
 migr:

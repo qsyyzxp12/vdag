@@ -39,7 +39,7 @@ class Player(models.Model):
 
 class PPP(models.Model):
 	class Meta:
-		unique_together = (('game', 'offense_way', 'shot_way', 'result', 'player'), )
+		unique_together = (('game', 'offense_way', 'shot_way', 'result', 'player', 'isTeamPPP'), )
 	game = models.ForeignKey(Game)
 	isTeamPPP = models.BooleanField(default=False)
 	player = models.ForeignKey(Player, blank=True, null=True)
@@ -60,6 +60,14 @@ class PPP(models.Model):
 		else:
 			return str(self.game) + ' ' + self.offense_way + '/' + self.shot_way + '/' + str(self.value)
 	def clean(self):
+		if self.isTeamPPP == True:
+			obj = None
+			try:
+				obj = PPP.objects.get(game=self.game, isTeamPPP=True)
+			except:
+				pass
+			if obj:
+				raise ValidationError("This game's team PPP already exists.")
 		if((self.shot_way == 'TO' or self.shot_way == 'PO')):
 			if(self.result):
 				raise ValidationError("Result should be null!")
@@ -73,6 +81,14 @@ class PPP(models.Model):
 			raise ValidationError("Player is required.")
 		return self
 	def save(self, *args, **kwargs):
+		if self.isTeamPPP == 'True':
+			obj = None
+			try:
+				obj = PPP.objects.get(game=self.game, isTeamPPP=True)
+			except:
+				pass
+			if obj:
+				raise ValidationError("This game's team PPP already exists.")
 		if((self.shot_way == 'TO' or self.shot_way == 'PO')):
 			if(self.result):
 				raise ValidationError("Result should be null!")
@@ -80,9 +96,9 @@ class PPP(models.Model):
 			if(not self.result):
 				raise ValidationError("Result can't be null!")
 
-		if(self.isTeamPPP and self.player is not None):
+		if(self.isTeamPPP == 'True' and self.player is not None):
 			raise ValidationError("Player should be null when 'isTeamPPP' box is checked.")
-		elif(not self.isTeamPPP and self.player is None):
+		elif(self.isTeamPPP == 'False' and self.player is None):
 			raise ValidationError("Player is required.")
 		super(PPP, self).save(*args, **kwargs)
 
@@ -159,13 +175,22 @@ class ShotChart(models.Model):
 			raise ValidationError("Zone10_made cannot be more than attempt")
 		if(self.zone11_made > self.zone11_attempt):
 			raise ValidationError("Zone11_made cannot be more than attempt")
+		
+		if(self.isTeamShotChart and self.player is not None):
+			raise ValidationError("Player should be null when 'isTeamPPP' box is checked.")
+		elif(not self.isTeamShotChart and self.player is None):
+			raise ValidationError("Player is required.")
 		return self
 	
 	def save(self, *args, **kwargs):
-		if self.isTeamShotChart == True:
-			obj = ShotChart.objects.get(game=self.game, isTeamShotChart=True)
+		if self.isTeamShotChart == 'True':
+			obj = None
+			try:
+				obj = ShotChart.objects.get(game=self.game, isTeamShotChart=True)
+			except:
+				pass
 			if obj:
-				raise ValidationError("This game's team Shot Chart already exists.")
+				raise ValidationError("This game's team ShotChart already exists.")
 		if(self.zone1_made > self.zone1_attempt):
 			raise ValidationError("Zone1_made cannot be more than attempt")
 		if(self.zone2_made > self.zone2_attempt):
@@ -188,6 +213,11 @@ class ShotChart(models.Model):
 			raise ValidationError("Zone10_made cannot be more than attempt")
 		if(self.zone11_made > self.zone11_attempt):
 			raise ValidationError("Zone11_made cannot be more than attempt")
+		
+		if(self.isTeamShotChart and self.player is not None):
+			raise ValidationError("Player should be null when 'isTeamPPP' box is checked.")
+		elif(not self.isTeamShotChart and self.player is None):
+			raise ValidationError("Player is required.")
 		super(ShotChart, self).save(*args, **kwargs)
 
 class TimeLine(models.Model):
@@ -333,8 +363,12 @@ class Defense(models.Model):
 			raise ValidationError("Player is required.")
 		return self
 	def save(self, *args, **kwargs):
-		if self.isTeamDefense == True:
-			obj = Defense.objects.get(game=self.game, isTeamDefense=True)
+		if self.isTeamDefense == 'True':
+			obj = None
+			try:
+				obj = Defense.objects.get(game=self.game, isTeamDefense=True)
+			except:
+				pass
 			if obj:
 				raise ValidationError("This game's team Defense already exists.")
 		if(self.isTeamDefense and self.player is not None):
@@ -383,8 +417,12 @@ class BoxScore(models.Model):
 			raise ValidationError("Player is required.")
 		return self
 	def save(self, *args, **kwargs):
-		if self.isTeamBoxScore == True:
-			obj = BoxScore.objects.get(game=self.game, isTeamBoxScore=True)
+		if self.isTeamBoxScore == 'True':
+			obj = None
+			try:
+				obj = BoxScore.objects.get(game=self.game, isTeamBoxScore=True)
+			except:
+				pass
 			if obj:
 				raise ValidationError("This game's team BoxScore already exists.")
 		if(self.isTeamBoxScore and self.player is not None):
