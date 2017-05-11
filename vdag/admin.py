@@ -133,6 +133,7 @@ class ShotChartAdmin(admin.ModelAdmin):
 		return str(obj.zone11_made) + '/' + str(obj.zone11_attempt) + '  ' + str(hit_rate) + '%'
 
 class PlayerAdmin(admin.ModelAdmin):
+	inlines = [PPPInline, ShotChartInline, DefenseInline, BoxScoreInline]
 	list_display = ('name', 'number', 'height', 'used_hand')
 
 class TimeLineAdmin(admin.ModelAdmin):
